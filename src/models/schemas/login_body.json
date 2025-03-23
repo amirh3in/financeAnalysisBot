@@ -1,0 +1,22 @@
+{
+  "title": "Login Body Schema",
+  "type": "object",
+  "properties": {
+    "username": {
+      "type": "string"
+    },
+    "password": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "username",
+    "password"
+  ],
+  "errorMessage": {
+    "required": {
+      "username": "نام کاربری اجباری است!",
+      "password": "رمز عبور اجباری است!"
+    }
+  }
+}

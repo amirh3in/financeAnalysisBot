@@ -1,0 +1,13 @@
+{
+    "title": "base page and size schema",
+    "type": "object",
+    "properties": {
+        "page": {
+            "type": "integer"
+        },
+        "size": {
+            "type": "integer"
+        }
+    },
+    "required": []
+}

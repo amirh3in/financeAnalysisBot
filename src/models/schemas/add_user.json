@@ -1,0 +1,32 @@
+{
+    "title": "add user schema",
+    "type": "object",
+    "properties": {
+        "username": {
+            "type": "string"
+        },
+        "password": {
+            "type": "string"
+        },
+        "company": {
+            "type": "string"
+        },
+        "role": {
+            "type": "integer"
+        },
+        "status": {
+            "type": "integer",
+            "enum": [
+                0,
+                1
+            ]
+        },
+        "verified": {
+            "type": "boolean"
+        }
+    },
+    "required": [
+        "username",
+        "password"
+    ]
+}
