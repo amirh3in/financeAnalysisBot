@@ -5,8 +5,7 @@ import Fastify from 'fastify'
 import { initSwagger } from './swagger'
 import app from './app'
 import ajvErrors from 'ajv-errors'
-import cron from 'node-cron'
-import sendLog from './Services/logger'
+import sendLog from './services/logger'
 
 dotenv.config()
 
@@ -55,6 +54,7 @@ void initSwagger(fastify)
 const closeListeners = closeWithGrace({ delay: 5000 }, async (opts: any) => {
   if (opts.err) {
     console.log("eerorrrr happened in graceeeeeeeeeeeeeeeee")
+    await sendLog("exeption: ", opts.err.message)
     fastify.log.error(opts.err)
   }
   await fastify.close()
@@ -81,11 +81,7 @@ void fastify.ready((err) => {
   fastify.log.info(`Server listening on port ${Number(process.env.PORT ?? 3000)}`)
 
 
-  cron.schedule('* * * * *', () => {
-    console.log('Running a task every minute');
-    sendLog("info", 'Running a task every minute')
-    // Add your task logic here
-  });
+
 })
 
 export { fastify as app }

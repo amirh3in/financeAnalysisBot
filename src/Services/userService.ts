@@ -1,16 +1,12 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { PrismaClient, User } from '@prisma/client';
+import { User } from '@prisma/client';
 import { AddUserSchema } from '../models/im/add_user';
 import { BasePageAndSizeSchema } from '../models/im/page_and_size';
 import { LoginParamSchema } from '../models/im/login_param';
 import { makeRes } from '../models';
+import { baseService } from './base';
 
-export class UserService {
-    private context: PrismaClient;
-
-    constructor(prisma: PrismaClient) {
-        this.context = prisma;
-    }
+export class UserService extends baseService {
 
     async createUser(request: FastifyRequest<{ Body: AddUserSchema }>, reply: FastifyReply) {
         const newUser: User = await this.context.user.create({
@@ -24,7 +20,7 @@ export class UserService {
             },
         });
 
-        return reply.status(200).send(newUser);
+        return this.getResult(reply, newUser)
     }
 
     async GetAllUsers(request: FastifyRequest<{ Body: BasePageAndSizeSchema & { username?: string; company?: string } }>, reply: FastifyReply) {
@@ -57,12 +53,12 @@ export class UserService {
             }),
         ]);
 
-        return reply.send({
+        return this.getResult(reply, {
             data: users,
             totalCount,
             page,
             size,
-        });
+        })
     }
 
     async LoginUser(request: FastifyRequest<{ Body: LoginParamSchema }>, reply: FastifyReply) {
@@ -74,9 +70,11 @@ export class UserService {
         });
 
         if (!user) {
-            return reply.status(400).send(makeRes(false, null, 'user not found!', 404));
+            return this.getResult(reply, makeRes(false, null, 'user not found!', 404), 400);
+            // return reply.status(400).send();
         }
 
-        return reply.status(200).send(makeRes(true, user));
+        // return reply.status(200).send(makeRes(true, user));
+        return this.getResult(reply, makeRes(true, user));
     }
 }

@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Trade" ADD COLUMN     "recordDate" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP;

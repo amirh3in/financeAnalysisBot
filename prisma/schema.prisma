@@ -24,13 +24,15 @@ model User {
 }
 
 model Trade {
-  id         Int    @id @default(autoincrement())
-  pair       String
-  algoritm   String
-  tp         Float  @default(0)
-  sl         Float  @default(0)
-  orderType  Int
-  candleTime String
-  candleInfo String
-  status     Int    @default(1)
+  id              Int       @id @default(autoincrement())
+  pair            String
+  algoritm        String
+  tp              Float     @default(0)
+  sl              Float     @default(0)
+  orderType       Int
+  candleTime      String
+  candleInfo      String
+  candleTimeStamp String    @default("")
+  status          Int       @default(1)
+  recordDate      DateTime? @default(now())
 }
