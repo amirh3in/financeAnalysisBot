@@ -5,6 +5,8 @@ import Fastify from 'fastify'
 import { initSwagger } from './swagger'
 import app from './app'
 import ajvErrors from 'ajv-errors'
+import cron from 'node-cron'
+import sendLog from './Services/logger'
 
 dotenv.config()
 
@@ -77,6 +79,13 @@ void fastify.ready((err) => {
   fastify.log.info('All routes loaded! Check your console for the route details.')
   console.log(fastify.printRoutes())
   fastify.log.info(`Server listening on port ${Number(process.env.PORT ?? 3000)}`)
+
+
+  cron.schedule('* * * * *', () => {
+    console.log('Running a task every minute');
+    sendLog("info", 'Running a task every minute')
+    // Add your task logic here
+  });
 })
 
 export { fastify as app }
