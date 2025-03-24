@@ -7,7 +7,7 @@ import { loginfo } from '../../../services/logger';
 
 
 const prismaPlugin = fp(async (fastify, opts) => {
-    cron.schedule('* * * * *', () => {
+    cron.schedule('*/30 * * * *', () => {
         console.log('Running a task every minute');
 
         loginfo("executing job")
