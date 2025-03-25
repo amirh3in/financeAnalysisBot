@@ -7,13 +7,15 @@ import { loginfo } from '../../../services/logger';
 
 
 const prismaPlugin = fp(async (fastify, opts) => {
-    cron.schedule('*/30 * * * *', () => {
+
+    let cronconfig: string = process.env.SIGNAL_INTERVAL ?? "";
+    cron.schedule(cronconfig, () => {
         console.log('Running a task every minute');
 
         loginfo("executing job")
         let financial = new FinanceService(fastify.prisma);
 
-        let res = financial.checkforOpportunities()
+        financial.checkforOpportunities()
         // sendLog("info", 'Running a task every minute')
         // Add your task logic here
     });
