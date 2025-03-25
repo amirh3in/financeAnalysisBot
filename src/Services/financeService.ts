@@ -120,7 +120,7 @@ export class FinanceService extends baseService {
                     }
                     let addRes = await this.addTrade(newTrade)
                     if (addRes)
-                        await sendLog("Signal", `🟢 buy signal on ${symbol.toUpperCase()}\nTimeFrame: ${timeFrame}\nEntry: ${entry}\nSL: ${sl}\nTP: ${tp}\nzoneHigh: ${zoneHigh}\nzoneLow: ${zoneLow}`, item.time)
+                        await sendLog("Signal", `🟢 buy signal on ${symbol.toUpperCase()}\nTimeFrame: ${timeFrame}\nEntry: ${entry}\nSL: ${sl}\nTP: ${tp}\nzoneHigh: ${zoneHigh}\nzoneLow: ${zoneLow}\nvolume: ${item.volume} \n\n #${symbol} #${timeFrame} #${symbol}${timeFrame}`, item.time)
                 } else {
                     let entry = zoneLow
                     let sl = zoneHigh + 0.05
@@ -143,7 +143,7 @@ export class FinanceService extends baseService {
                     let addRes = await this.addTrade(newTrade)
 
                     if (addRes)
-                        await sendLog("Signal", `🔴 Sell signal on ${symbol.toUpperCase()}\nTimeFrame: ${timeFrame}\nEntry: ${entry}\nSL: ${sl}\nTP: ${tp}\nzoneHigh: ${zoneHigh}\nzoneLow: ${zoneLow}`, item.time)
+                        await sendLog("Signal", `🔴 Sell signal on ${symbol.toUpperCase()}\nTimeFrame: ${timeFrame}\nEntry: ${entry}\nSL: ${sl}\nTP: ${tp}\nzoneHigh: ${zoneHigh}\nzoneLow: ${zoneLow}\nvolume: ${item.volume} \n\n #${symbol} #${timeFrame} #${symbol}${timeFrame}`, item.time)
 
                 }
 
