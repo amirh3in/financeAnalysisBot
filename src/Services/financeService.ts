@@ -95,9 +95,10 @@ export class FinanceService extends baseService {
             // 3- if the price is bellow the zone, it should be sell signal. if the price was above, it should be buy signal
             if ((currentPrice > zoneHigh || currentPrice < zoneLow) && change <= (time == "minute" ? 0.20 : 0.70)) {// if the price was not in the zone
 
-                let entry = zoneHigh
+
 
                 if (isBuy) {
+                    let entry = zoneHigh
                     let sl = zoneLow - 0.05
                     let tp = (Math.abs(sl - entry) * 3) + entry
 
@@ -117,7 +118,8 @@ export class FinanceService extends baseService {
                     if (addRes)
                         await sendLog("Signal", `🟢 buy signal on ${symbol.toUpperCase()}\nTimeFrame: ${timeFrame}\nEntry: ${entry}\nSL: ${sl}\nTP: ${tp}\nzoneHigh: ${zoneHigh}\nzoneLow: ${zoneLow}`, item.time)
                 } else {
-                    let sl = zoneLow + 0.05
+                    let entry = zoneLow
+                    let sl = zoneHigh + 0.05
                     let tp = entry - (Math.abs(sl - entry) * 3)
 
                     //@ts-ignore
