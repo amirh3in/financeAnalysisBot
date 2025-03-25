@@ -109,54 +109,15 @@ export class FinanceService extends baseService {
 
                 if (isBuy) {
                     entry = zoneHigh
-                    sl = zoneLow - 0.05
-                    tp = (Math.abs(sl - entry) * 3) + entry
+                    sl = Number((zoneLow - 0.05).toFixed(5))
+                    tp = Number(((Math.abs(sl - entry) * 3) + entry).toFixed(5))
                     signalDesc = '🟢 buy signal on ';
-                    // //@ts-ignore
-                    // let newTrade: Trade = {
-                    //     pair: symbol,
-                    //     algoritm: 'order block',
-                    //     tp: tp,
-                    //     sl: sl,
-                    //     candleTime: item.time,
-                    //     candleInfo: JSON.stringify(item),
-                    //     volume: item.volume,
-                    //     candleTimeStamp: String(sortedList[0].timestamp),
-                    //     orderType: EOrderType.BUY,
-                    //     status: EStatus.PENDING,
-                    //     timeFrame: timeFrame
-                    // }
-                    // let addRes = await this.addTrade(newTrade)
-                    // if (addRes)
-                    //     await sendLog("Signal", `🟢 buy signal on ${symbol.toUpperCase()}\nTimeFrame: ${timeFrame}\nEntry: ${entry}\nSL: ${sl}\nTP: ${tp}\nzoneHigh: ${zoneHigh}\nzoneLow: ${zoneLow}\nvolume: ${item.volume} \n\n #${symbol} #${timeFrame} #${symbol}${timeFrame}`, item.time)
                 } else {
                     entry = zoneLow
-                    sl = zoneHigh + 0.05
-                    tp = entry - (Math.abs(sl - entry) * 3)
+                    sl = Number((zoneHigh + 0.05).toFixed(5))
+                    tp = Number((entry - (Math.abs(sl - entry) * 3)).toFixed(5))
                     signalDesc = '🔴 Sell signal on ';
-
-                    // //@ts-ignore
-                    // let newTrade: Trade = {
-                    //     pair: symbol,
-                    //     algoritm: 'order block',
-                    //     tp: tp,
-                    //     sl: sl,
-                    //     candleTime: item.time,
-                    //     volume: item.volume,
-                    //     candleInfo: JSON.stringify(item),
-                    //     candleTimeStamp: String(sortedList[0].timestamp),
-                    //     orderType: EOrderType.SELL,
-                    //     status: EStatus.PENDING,
-                    //     timeFrame: timeFrame
-                    // }
-                    // let addRes = await this.addTrade(newTrade)
-
-                    // if (addRes)
-                    //     await sendLog("Signal", `🔴 Sell signal on ${symbol.toUpperCase()}\nTimeFrame: ${timeFrame}\nEntry: ${entry}\nSL: ${sl}\nTP: ${tp}\nzoneHigh: ${zoneHigh}\nzoneLow: ${zoneLow}\nvolume: ${item.volume} \n\n #${symbol} #${timeFrame} #${symbol}${timeFrame}`, item.time)
-
                 }
-
-
 
                 //@ts-ignore
                 let newTrade: Trade = {
