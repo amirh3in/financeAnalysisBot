@@ -6,6 +6,8 @@ import { GetByOrderBlockStrategy } from '../finance/algOrderBlock';
 // import { FastifyInstance } from 'fastify';
 import { baseService } from './base';
 import * as dotenv from 'dotenv'
+import { EStatus } from '../models/enums/EStatus';
+import { EOrderType } from '../models/enums/EOrderType';
 
 dotenv.config()
 export class FinanceService extends baseService {
@@ -110,9 +112,11 @@ export class FinanceService extends baseService {
                         sl: sl,
                         candleTime: item.time,
                         candleInfo: JSON.stringify(item),
-                        candleTimeStamp: String(item.timestamp),
-                        orderType: 1,
-                        status: 0
+                        volume: item.volume,
+                        candleTimeStamp: String(sortedList[0].timestamp),
+                        orderType: EOrderType.BUY,
+                        status: EStatus.PENDING,
+                        timeFrame: timeFrame
                     }
                     let addRes = await this.addTrade(newTrade)
                     if (addRes)
@@ -129,10 +133,12 @@ export class FinanceService extends baseService {
                         tp: tp,
                         sl: sl,
                         candleTime: item.time,
+                        volume: item.volume,
                         candleInfo: JSON.stringify(item),
-                        candleTimeStamp: String(item.timestamp),
-                        orderType: 0,
-                        status: 0
+                        candleTimeStamp: String(sortedList[0].timestamp),
+                        orderType: EOrderType.SELL,
+                        status: EStatus.PENDING,
+                        timeFrame: timeFrame
                     }
                     let addRes = await this.addTrade(newTrade)
 

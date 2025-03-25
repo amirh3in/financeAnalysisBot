@@ -35,4 +35,7 @@ model Trade {
   candleTimeStamp String    @default("")
   status          Int       @default(1)
   recordDate      DateTime? @default(now())
+  volume          Float?
+  profitOrLoss    BigInt?
+  timeFrame       String?
 }
