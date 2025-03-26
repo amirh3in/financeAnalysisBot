@@ -195,7 +195,9 @@ export class FinanceService extends baseService {
 }
 
 function tradableinAnyZone(zoneLow: number, zoneHigh: number, upperZones: SignalTradeVM[]) {
-    let result = upperZones.filter(x => x.zoneHigh >= zoneHigh && x.zoneLow <= zoneLow)
+    let result = upperZones.filter(x => (x.zoneHigh >= zoneHigh && x.zoneLow <= zoneLow))
+    // || (x.zoneHigh <= zoneHigh && x.zoneHigh >= zoneLow)
+    // || (x.zoneHigh >= zoneHigh && x.zoneLow <= zoneHigh))
 
     return result.length > 0;
 }
