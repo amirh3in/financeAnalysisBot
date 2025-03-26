@@ -34,9 +34,9 @@ export class FinanceService extends baseService {
         // else
         exist = await this.context.trade.findFirst({
             where: {
-                candleTimeStamp: {
-                    equals: trade.candleTimeStamp
-                },
+                candleTimeStamp: trade.candleTimeStamp,
+                orderType: trade.orderType,
+                timeFrame: trade.timeFrame,
                 recordDate: {
                     gte: HoursAgo
                 }
