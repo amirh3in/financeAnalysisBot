@@ -30,10 +30,11 @@ model Trade {
   tp              Float     @default(0)
   sl              Float     @default(0)
   orderType       Int
+  status          Int       @default(0)
+  signalType      Int       @default(1)
   candleTime      String
   candleInfo      String
   candleTimeStamp String    @default("")
-  status          Int       @default(1)
   recordDate      DateTime? @default(now())
   volume          Float?
   profitOrLoss    BigInt?

@@ -1,6 +1,6 @@
 import { Trade } from '@prisma/client';
 import sendLog from './logger';
-import { CandleResponse, Candlestick, OrderBlockVM } from '../finance/types';
+import { CandleResponse, Candlestick, OrderBlockVM, SignalTradeVM } from '../finance/types';
 import { calculatePercentageChange, formatData } from '../finance/util';
 import { GetByOrderBlockStrategy } from '../finance/algOrderBlock';
 // import { FastifyInstance } from 'fastify';
@@ -8,16 +8,30 @@ import { baseService } from './base';
 import * as dotenv from 'dotenv'
 import { EStatus } from '../models/enums/EStatus';
 import { EOrderType } from '../models/enums/EOrderType';
+import { ESignalType } from '../models/enums/ESignalType';
+import type { TimeFrame } from '../models/finance';
 
 dotenv.config()
 export class FinanceService extends baseService {
 
     async addTrade(trade: Trade) {
-        let limit = 4;
+        let limit = trade.timeFrame == "3h" ? 6 : 4;
+
 
         const HoursAgo = new Date(Date.now() - limit * 60 * 60 * 1000);
 
-        let exist = await this.context.trade.findFirst({
+        let exist;
+
+        // if (trade.timeFrame == '3h')
+        //     exist = await this.context.trade.findFirst({
+        //         where: {
+        //             candleTimeStamp: {
+        //                 equals: trade.candleTimeStamp
+        //             }
+        //         }
+        //     })
+        // else
+        exist = await this.context.trade.findFirst({
             where: {
                 candleTimeStamp: {
                     equals: trade.candleTimeStamp
@@ -40,22 +54,21 @@ export class FinanceService extends baseService {
 
     async checkforOpportunities() {
         try {
-            const symbol = "xauusd",
-                time: "minute" | "hour" = "minute",
-                interval = "15"
+            const symbol = "xauusd";
 
-            await this.runCheck(time, symbol, interval)
-            await this.runCheck("hour", symbol, "3")
+            let res = await this.runCheck(symbol, "3", '3h')
+            res ??= [];
+            await this.runCheck(symbol, "5", '5m', res)
 
         } catch (err: any) {
             sendLog("exeption: ", err?.message)
         }
     }
 
-    async runCheck(time: "minute" | "hour", symbol: string, interval: string) {
-        const { tomorrow, daysAgo } = getTimeRange(time)
-        let url = `https://api.finage.co.uk/agg/forex/${symbol}/${interval}/${time}/${daysAgo}/${tomorrow}/?apikey=${process.env.FOREX_API}`;
-        const timeFrame = time == "minute" ? "15m" : "3h"
+    async runCheck(symbol: string, interval: string, timeFrame: TimeFrame, upperTimeZones?: SignalTradeVM[]) {
+        const { tomorrow, daysAgo, timeTitle } = getTimeRange(timeFrame)
+        let url = `https://api.finage.co.uk/agg/forex/${symbol}/${interval}/${timeTitle}/${daysAgo}/${tomorrow}/?apikey=${process.env.FOREX_API}`;
+        // const timeFrame: TimeFrame = time == "minute" ? "15m" : "3h"
         var response = await fetch(url);
 
         if (response.status != 200)
@@ -67,12 +80,12 @@ export class FinanceService extends baseService {
 
         let sortedList = formatData(res.results, symbol)
 
-        let idealRate = time == "minute" ? 0.03 : 0.10
-        let result = GetByOrderBlockStrategy(sortedList, idealRate);
-
+        let idealRate = timeFrame == "5m" ? 0.03 : 0.10
+        let strategyRes = GetByOrderBlockStrategy(sortedList, idealRate);
+        let result: SignalTradeVM[] = [];
 
         // 1- loop through the trade opportunities.
-        result.forEach(async (item: OrderBlockVM) => {
+        strategyRes.forEach(async (item: OrderBlockVM) => {
 
             let zoneLow: number,
                 zoneHigh: number,
@@ -86,6 +99,14 @@ export class FinanceService extends baseService {
                 zoneHigh = item.rangeHigh;
             }
 
+            let inBiggerZone = false;
+
+            if (upperTimeZones && upperTimeZones?.length != 0)
+                inBiggerZone = tradableinAnyZone(zoneLow, zoneHigh, upperTimeZones)
+
+            if (timeFrame != '3h' && !inBiggerZone)
+                return;
+
             const currentPrice = sortedList[0].close
             isBuy = Math.abs(currentPrice - zoneHigh) < Math.abs(currentPrice - zoneLow)
 
@@ -97,26 +118,42 @@ export class FinanceService extends baseService {
                 change = calculatePercentageChange(currentPrice, zoneLow)
 
             // 3- if the price is bellow the zone, it should be sell signal. if the price was above, it should be buy signal
-            if ((currentPrice > zoneHigh || currentPrice < zoneLow) && change <= (time == "minute" ? 0.20 : 0.70)) {// if the price was not in the zone
+            // (currentPrice > zoneHigh || currentPrice < zoneLow) &&
+            if (change <= (timeFrame == "5m" ? 0.20 : 0.70)) {// if the price was not in the zone
 
-                let entry: number,
-                    sl: number,
-                    tp: number,
+                let entry: number = 0,
+                    sl: number = 0,
+                    tp: number = 0,
                     signalDesc: string;
-                // here count countCandlesInRange
+
+
+                // filtering zone that has less close candle. meaning the less candle closed in that range then the range is more valid
                 let afterCandles = sortedList.filter(x => x.id < item.id);
                 const { closeInRangeCount, passesThroughRangeCount } = countCandlesInRange(afterCandles, zoneLow, zoneHigh)
+                if ((timeFrame == "5m" || timeFrame == "15m") && closeInRangeCount > 10)
+                    return
+                else if (timeFrame == "3h" && closeInRangeCount > 5)
+                    return;
 
-                if (isBuy) {
-                    entry = zoneHigh
-                    sl = Number((zoneLow - 0.05).toFixed(5))
-                    tp = Number(((Math.abs(sl - entry) * 3) + entry).toFixed(5))
-                    signalDesc = '🟢 buy signal on ';
-                } else {
-                    entry = zoneLow
-                    sl = Number((zoneHigh + 0.05).toFixed(5))
-                    tp = Number((entry - (Math.abs(sl - entry) * 3)).toFixed(5))
-                    signalDesc = '🔴 Sell signal on ';
+
+
+                // check if the timeframe is for support or trade
+                if (timeFrame != '3h') {// signal for trade
+
+                    // filling data with buy or sell signal
+                    if (isBuy) {
+                        entry = zoneHigh
+                        sl = Number((zoneLow - 0.05).toFixed(5))
+                        tp = Number(((Math.abs(sl - entry) * 3) + entry).toFixed(5))
+                        signalDesc = '🟢 buy signal on ';
+                    } else {
+                        entry = zoneLow
+                        sl = Number((zoneHigh + 0.05).toFixed(5))
+                        tp = Number((entry - (Math.abs(sl - entry) * 3)).toFixed(5))
+                        signalDesc = '🔴 Sell signal on ';
+                    }
+                } else {// signal for support
+                    signalDesc = 'support Discovered on ';
                 }
 
                 //@ts-ignore
@@ -128,12 +165,18 @@ export class FinanceService extends baseService {
                     candleTime: item.time,
                     candleInfo: JSON.stringify(item),
                     volume: item.volume,
+                    signalType: ESignalType.TRADE,
                     candleTimeStamp: String(sortedList[0].timestamp),
-                    orderType: EOrderType.BUY,
+                    orderType: isBuy ? EOrderType.BUY : EOrderType.SELL,
                     status: EStatus.PENDING,
                     timeFrame: timeFrame
                 }
 
+                result.push({
+                    ...newTrade,
+                    zoneHigh: zoneHigh,
+                    zoneLow: zoneLow
+                })
 
                 let addRes = await this.addTrade(newTrade)
 
@@ -143,9 +186,23 @@ export class FinanceService extends baseService {
             }
         })
 
+        return result;
     }
 }
 
+function tradableinAnyZone(zoneLow: number, zoneHigh: number, upperZones: SignalTradeVM[]) {
+    let result = upperZones.filter(x => x.zoneHigh >= zoneHigh && x.zoneLow <= zoneLow)
+
+    return result.length > 0;
+}
+
+/**
+ * this function returns the count of candles that was in the range of given numbers
+ * @param candles
+ * @param minRange
+ * @param maxRange
+ * @returns
+ */
 function countCandlesInRange(candles: Candlestick[], minRange: number, maxRange: number) {
     let closeInRangeCount = 0;
     let passesThroughRangeCount = 0;
@@ -172,7 +229,12 @@ function countCandlesInRange(candles: Candlestick[], minRange: number, maxRange:
 }
 
 
-function getTimeRange(timeframe: string): { tomorrow: string; daysAgo: string } {
+/**
+ * this function gives back the dynamic parameteres for the external api in this case forex
+ * @param timeframe
+ * @returns
+ */
+function getTimeRange(timeframe: TimeFrame): { tomorrow: string; daysAgo: string, timeTitle: string } {
     // Get current date
     const today = new Date();
 
@@ -181,7 +243,7 @@ function getTimeRange(timeframe: string): { tomorrow: string; daysAgo: string } 
     tomorrow.setDate(today.getDate() + 1);
 
     // Calculate date 15 days ago
-    let dayCount = timeframe == "minute" ? 5 : 15;
+    let dayCount = timeframe == "3h" ? 15 : 1;
     const daysAgo = new Date(today);
     daysAgo.setDate(today.getDate() - dayCount);
 
@@ -193,7 +255,10 @@ function getTimeRange(timeframe: string): { tomorrow: string; daysAgo: string } 
         return `${year}-${month}-${day}`;
     };
 
+    let timeTitle = timeframe.indexOf("m") > -1 ? "minute" : timeframe.indexOf("h") > -1 ? "hour" : "";
+
     return {
+        timeTitle: timeTitle,
         tomorrow: formatDate(tomorrow),
         daysAgo: formatDate(daysAgo)
     };

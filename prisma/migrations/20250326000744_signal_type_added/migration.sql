@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Trade" ADD COLUMN     "signalType" INTEGER NOT NULL DEFAULT 1,
+ALTER COLUMN "status" SET DEFAULT 0;

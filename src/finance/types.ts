@@ -1,3 +1,5 @@
+import { Trade } from "@prisma/client";
+
 export type CandleResponse = {
     l: number;
     h: number;
@@ -35,4 +37,10 @@ export type SignalVM = OrderBlockVM & {
     tp: number;
     price: number;
     sl: number;
+}
+
+// ////////////////////////////
+export type SignalTradeVM = Trade & {
+    zoneHigh: number;
+    zoneLow: number;
 }

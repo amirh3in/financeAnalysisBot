@@ -1,5 +1,11 @@
 import { Candlestick, OrderBlockVM } from "./types";
 
+/**
+ * this function check candles having conditions for being order block candles with given alghoritm
+ * @param data
+ * @param idealRate
+ * @returns
+ */
 export function GetByOrderBlockStrategy(data: Candlestick[], idealRate: number = 0.10): OrderBlockVM[] {
     let list = Array.from(data);
 
@@ -35,6 +41,14 @@ function findSwingBases(candlesticks: Candlestick[]) {
 
     return swingBases;
 }
+
+/**
+ * this function check each candle that has condition for being order block candle with given alghoritm
+ * @param list
+ * @param candle
+ * @param idealRate
+ * @returns
+ */
 const checkCandle = (list: Candlestick[], candle: Candlestick, idealRate: number): OrderBlockVM | null => {
     if (candle.id == 2) {
         console.log("  ")

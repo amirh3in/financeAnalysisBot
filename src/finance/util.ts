@@ -88,6 +88,12 @@ export function formatData(result: CandleResponse[], symbol: string) {
 
 }
 
+/**
+ * this function returns the distance percentage of two prices
+ * @param originalPrice
+ * @param newPrice
+ * @returns
+ */
 export function calculatePercentageChange(originalPrice: number, newPrice: number): number {
     const difference = newPrice - originalPrice;
     const percentageChange = (difference / originalPrice) * 100;
