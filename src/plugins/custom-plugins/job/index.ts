@@ -1,7 +1,7 @@
 import fp from 'fastify-plugin';
 import { FinanceService } from '../../../services/financeService'
 import cron from 'node-cron'
-import { loginfo } from '../../../services/logger';
+import { loginfo } from '../../../logger';
 // import sendLog from '../../../services/logger';
 
 

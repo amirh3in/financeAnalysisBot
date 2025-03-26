@@ -5,7 +5,7 @@ import Fastify from 'fastify'
 import { initSwagger } from './swagger'
 import app from './app'
 import ajvErrors from 'ajv-errors'
-import sendLog from './services/logger'
+import sendLog from './logger'
 
 dotenv.config()
 

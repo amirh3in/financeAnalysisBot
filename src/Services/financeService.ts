@@ -1,5 +1,5 @@
 import { Trade } from '@prisma/client';
-import sendLog from './logger';
+import sendLog from '../logger';
 import { CandleResponse, Candlestick, OrderBlockVM, SignalTradeVM } from '../finance/types';
 import { calculatePercentageChange, formatData } from '../finance/util';
 import { GetByOrderBlockStrategy } from '../finance/algOrderBlock';
@@ -10,6 +10,7 @@ import { EStatus } from '../models/enums/EStatus';
 import { EOrderType } from '../models/enums/EOrderType';
 import { ESignalType } from '../models/enums/ESignalType';
 import type { TimeFrame } from '../models/finance';
+import { logTextFile } from '../logger/textLogger';
 
 dotenv.config()
 export class FinanceService extends baseService {
@@ -83,6 +84,8 @@ export class FinanceService extends baseService {
         let idealRate = timeFrame == "5m" ? 0.03 : 0.10
         let strategyRes = GetByOrderBlockStrategy(sortedList, idealRate);
         let result: SignalTradeVM[] = [];
+
+        await logTextFile({ data: JSON.stringify(strategyRes), title: `strategies result ${timeFrame}`, caption: "⌚Time: " + new Date().toLocaleString() })
 
         // 1- loop through the trade opportunities.
         strategyRes.forEach(async (item: OrderBlockVM) => {
