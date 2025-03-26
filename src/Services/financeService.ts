@@ -57,9 +57,9 @@ export class FinanceService extends baseService {
         try {
             const symbol = "xauusd";
 
-            // let res = await this.runCheck(symbol, "3", '3h')
-            // res ??= [];
-            await this.runCheck(symbol, "5", '5m', [])
+            let res = await this.runCheck(symbol, "3", '3h')
+            res ??= [];
+            await this.runCheck(symbol, "5", '5m', res)
 
         } catch (err: any) {
             sendLog("exeption: ", err?.message)
