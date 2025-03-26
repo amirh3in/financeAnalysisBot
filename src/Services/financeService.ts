@@ -57,9 +57,9 @@ export class FinanceService extends baseService {
         try {
             const symbol = "xauusd";
 
-            let res = await this.runCheck(symbol, "3", '3h')
-            res ??= [];
-            await this.runCheck(symbol, "5", '5m', res)
+            // let res = await this.runCheck(symbol, "3", '3h')
+            // res ??= [];
+            await this.runCheck(symbol, "5", '5m', [])
 
         } catch (err: any) {
             sendLog("exeption: ", err?.message)
@@ -247,7 +247,7 @@ function getTimeRange(timeframe: TimeFrame): { tomorrow: string; daysAgo: string
     tomorrow.setDate(today.getDate() + 1);
 
     // Calculate date 15 days ago
-    let dayCount = timeframe == "3h" ? 15 : 0;
+    let dayCount = timeframe == "3h" ? 15 : 1;
     const daysAgo = new Date(today);
     daysAgo.setDate(today.getDate() - dayCount);
 
