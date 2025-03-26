@@ -169,7 +169,8 @@ export class FinanceService extends baseService {
                     candleInfo: JSON.stringify(item),
                     volume: item.volume,
                     signalType: ESignalType.TRADE,
-                    candleTimeStamp: String(sortedList[0].timestamp),
+                    candleTimeStamp: String(item.timestamp),
+                    liveTimeStamp: String(sortedList[0].timestamp),
                     orderType: isBuy ? EOrderType.BUY : EOrderType.SELL,
                     status: EStatus.PENDING,
                     timeFrame: timeFrame
@@ -246,7 +247,7 @@ function getTimeRange(timeframe: TimeFrame): { tomorrow: string; daysAgo: string
     tomorrow.setDate(today.getDate() + 1);
 
     // Calculate date 15 days ago
-    let dayCount = timeframe == "3h" ? 15 : 1;
+    let dayCount = timeframe == "3h" ? 15 : 0;
     const daysAgo = new Date(today);
     daysAgo.setDate(today.getDate() - dayCount);
 
