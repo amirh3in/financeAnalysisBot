@@ -21,25 +21,50 @@ export const apiConfig = {
     chatId: '9400341',
     apiUrl: 'https://eitaayar.ir/api'
 };
-let tempFilePath: string;
+
 
 export async function logTextFile({ data, title, caption = '' }: SendTextOptions): Promise<ApiResponse> {
-    try {
-        // Convert data to string if it's an object
-        const textData = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+    let tempFilePath: string | null = null;
 
-        // Create a temporary file path
-        tempFilePath = path.join(__dirname, 'temp', `${title.replace(/\s+/g, '_')}_${Date.now()}.txt`);
+    try {
+        // 1. Format the data beautifully based on its type
+        let formattedText: string;
+
+        if (typeof data === 'string') {
+            // If it's already a string, try to parse it as JSON for formatting
+            try {
+                const parsed = JSON.parse(data);
+                formattedText = JSON.stringify(parsed, null, 2);
+            } catch {
+                // If not JSON, use as-is
+                formattedText = data;
+            }
+        } else if (typeof data === 'object') {
+            // Format objects with nice indentation
+            formattedText = JSON.stringify(data, null, 2);
+
+            // Add type information for arrays
+            if (Array.isArray(data)) {
+                formattedText = `// Array with ${data.length} items\n${formattedText}`;
+            }
+        } else {
+            // Convert other types (numbers, booleans) to string
+            formattedText = String(data);
+        }
+
+        // 2. Create a temporary file with appropriate extension
+        const extension = typeof data === 'object' ? 'json' : 'txt';
+        tempFilePath = path.join(__dirname, 'temp', `${title.replace(/\s+/g, '_')}_${Date.now()}.${extension}`);
 
         // Ensure temp directory exists
         if (!fs.existsSync(path.dirname(tempFilePath))) {
-            fs.mkdirSync(path.dirname(tempFilePath), { recursive: true })
+            fs.mkdirSync(path.dirname(tempFilePath), { recursive: true });
         }
 
-        // Write data to file
-        fs.writeFileSync(tempFilePath, textData);
+        // 3. Write formatted data to file
+        fs.writeFileSync(tempFilePath, formattedText);
 
-        // Create form data
+        // 4. Prepare form data for API
         const formData = new FormData();
         formData.append('file', fs.createReadStream(tempFilePath));
         formData.append('chat_id', apiConfig.chatId);
@@ -47,7 +72,7 @@ export async function logTextFile({ data, title, caption = '' }: SendTextOptions
         formData.append('caption', caption);
         formData.append('date', Math.floor(Date.now() / 1000) + 30);
 
-        // Send to API
+        // 5. Send to API
         const response = await axios.post(
             `${apiConfig.apiUrl}/${apiConfig.token}/sendFile`,
             formData,
@@ -57,20 +82,12 @@ export async function logTextFile({ data, title, caption = '' }: SendTextOptions
             }
         );
 
-        // Clean up
-        fs.unlinkSync(tempFilePath);
-
         return {
             success: true,
             data: response.data
         };
 
     } catch (error) {
-        // Clean up temp file if it exists
-        if (tempFilePath && fs.existsSync(tempFilePath)) {
-            fs.unlinkSync(tempFilePath);
-        }
-
         return {
             success: false,
             message: axios.isAxiosError(error)
@@ -79,5 +96,10 @@ export async function logTextFile({ data, title, caption = '' }: SendTextOptions
                     ? error.message
                     : 'Unknown error'
         };
+    } finally {
+        // 6. Clean up temp file if it exists
+        if (tempFilePath && fs.existsSync(tempFilePath)) {
+            fs.unlinkSync(tempFilePath);
+        }
     }
 }
