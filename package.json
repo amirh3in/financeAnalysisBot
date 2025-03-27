@@ -64,6 +64,7 @@
     "fastify-tsconfig": "3.0.0",
     "fs-extra": "^11.3.0",
     "graphql": "16.10.0",
+    "https-proxy-agent": "^7.0.6",
     "mercurius": "16.0.1",
     "mercurius-codegen": "6.0.0",
     "mercurius-integration-testing": "9.0.1",
@@ -74,6 +75,7 @@
     "openai": "^4.86.1",
     "pg": "^8.13.1",
     "socket.io": "^4.8.1",
+    "socks-proxy-agent": "^8.0.5",
     "swagger-jsdoc": "6.2.8",
     "typeorm-fastify-plugin": "^3.0.0"
   },

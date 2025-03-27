@@ -29,6 +29,7 @@
   "include": [
     "src/**/*.ts",
     "src/**/*.d.ts",
-    "declarations/**/*.d.ts"
+    "declarations/**/*.d.ts",
+    "src/services/proxy.js"
   ]
 }

@@ -12,8 +12,8 @@ const prismaPlugin = fp(async (fastify, opts) => {
     cron.schedule(cronconfig, () => {
         console.log('Running a task every minute');
 
-        loginfo("executing job")
-        let financial = new FinanceService(fastify.prisma);
+        loginfo("executing job", fastify.telegramBot)
+        let financial = new FinanceService(fastify.prisma, fastify);
 
         financial.checkforOpportunities()
         // sendLog("info", 'Running a task every minute')
