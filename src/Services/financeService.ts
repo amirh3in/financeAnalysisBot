@@ -168,7 +168,7 @@ export class FinanceService extends baseService {
                         signalDesc = '🔴 Sell signal on ';
                     }
                 } else {// signal for support
-                    signalDesc = 'support Discovered on ';
+                    signalDesc = 'zone Discovered on ';
                 }
 
                 //@ts-ignore

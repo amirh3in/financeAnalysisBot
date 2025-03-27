@@ -50,9 +50,7 @@ function findSwingBases(candlesticks: Candlestick[]) {
  * @returns
  */
 const checkCandle = (list: Candlestick[], candle: Candlestick, idealRate: number): OrderBlockVM | null => {
-    if (candle.id == 2) {
-        console.log("  ")
-    }
+
     // const positionDown = candle.down;
     let change = (Math.abs(candle.open - candle.close) / candle.close) * 100;
     // let result = [];

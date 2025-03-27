@@ -106,8 +106,13 @@ function convertTimestampToReadableDate(timestamp: number) {
 }
 
 
+let idCounter = 0;
+
 export function convert5mTo15mCandles(candles5m: Candlestick[]): Candlestick[] {
     if (candles5m.length === 0) return [];
+
+    // reset the counter
+    idCounter = 0;
 
     // Sort candles by timestamp in ascending order (oldest first)
     const sortedCandles = [...candles5m].sort((a, b) => a.timestamp - b.timestamp);
@@ -158,7 +163,7 @@ function create15mCandle(group: Candlestick[], groupStartTime: number): Candlest
 
     // Create the 15m candle
     return {
-        id: lastCandle.id, // Using last candle's ID
+        id: ++idCounter, // Using last candle's ID
         low,
         high,
         volume,
