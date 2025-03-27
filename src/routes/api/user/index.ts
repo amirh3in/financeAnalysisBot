@@ -9,7 +9,7 @@ import { BasePageAndSizeSchema } from '../../../models/im/page_and_size'
 
 const user: FastifyPluginAsync = async (fastify: FastifyInstance, _opts): Promise<void> => {
   // Refer https://swagger.io/docs/specification/describing-request-body/
-  const userService = new UserService(fastify.prisma);
+  const userService = new UserService(fastify.prisma, fastify);
 
   /**
    * @swagger

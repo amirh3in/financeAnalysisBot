@@ -185,7 +185,7 @@ export class FinanceService extends baseService {
                 let addRes = await this.addTrade(newTrade)
 
                 if (addRes)
-                    await sendLog("Signal", `${signalDesc} ${symbol.toUpperCase()}\nTimeFrame: ${timeFrame}\nEntry: ${entry}\nSL: ${sl}\nTP: ${tp}\n-------------------------\n\nzoneHigh: ${zoneHigh}\nzoneLow: ${zoneLow}\nvolume: ${item.volume}\nclosedInCount: ${closeInRangeCount}\nPassesThroughCount: ${passesThroughRangeCount} \n\n #${symbol} #${timeFrame} #${symbol}${timeFrame}`, item.time)
+                    await sendLog("Signal", `${signalDesc} ${symbol.toUpperCase()}\nTimeFrame: ${timeFrame}\nEntry: ${entry}\nSL: ${sl}\nTP: ${tp}\n-------------------------\n\nzoneHigh: ${zoneHigh}\nzoneLow: ${zoneLow}\nvolume: ${item.volume}\nclosedInCount: ${closeInRangeCount}\nPassesThroughCount: ${passesThroughRangeCount} \n\n #${symbol} #${timeFrame} #${symbol}${timeFrame}`, item.time, this.fastify.telegramBot)
 
             }
         })
