@@ -1,6 +1,6 @@
 
-import { calculatePercentageChange, formatData, isBase } from "./util";
+import { calculatePercentageChange, convert5mTo15mCandles, formatData, isBase } from "./util";
 import { GetByOrderBlockStrategy } from "./algOrderBlock";
 
 
-export default { formatData, GetByOrderBlockStrategy, isBase, calculatePercentageChange }
+export default { formatData, GetByOrderBlockStrategy, isBase, calculatePercentageChange, convert5mTo15mCandles }

@@ -1,7 +1,7 @@
 import { Trade } from '@prisma/client';
 import sendLog from '../logger';
 import { CandleResponse, Candlestick, OrderBlockVM, SignalTradeVM } from '../finance/types';
-import { calculatePercentageChange, formatData } from '../finance/util';
+import { calculatePercentageChange, convert5mTo15mCandles, formatData } from '../finance/util';
 import { GetByOrderBlockStrategy } from '../finance/algOrderBlock';
 // import { FastifyInstance } from 'fastify';
 import { baseService } from './base';
@@ -66,22 +66,34 @@ export class FinanceService extends baseService {
         }
     }
 
-    async runCheck(symbol: string, interval: string, timeFrame: TimeFrame, upperTimeZones?: SignalTradeVM[]) {
-        const { tomorrow, daysAgo, timeTitle } = getTimeRange(timeFrame)
-        let url = `https://api.finage.co.uk/agg/forex/${symbol}/${interval}/${timeTitle}/${daysAgo}/${tomorrow}/?apikey=${process.env.FOREX_API}`;
-        // const timeFrame: TimeFrame = time == "minute" ? "15m" : "3h"
-        var response = await fetch(url);
+    async runCheck(symbol: string, interval: string, timeFrame: TimeFrame, upperTimeZones?: SignalTradeVM[], data?: Candlestick[]) {
+        let sortedList: Candlestick[];
+        if (!data) {
+            const { tomorrow, daysAgo, timeTitle } = getTimeRange(timeFrame)
+            let url = `https://api.finage.co.uk/agg/forex/${symbol}/${interval}/${timeTitle}/${daysAgo}/${tomorrow}/?apikey=${process.env.FOREX_API}`;
+            // const timeFrame: TimeFrame = time == "minute" ? "15m" : "3h"
+            var response = await fetch(url);
 
-        if (response.status != 200)
-            return await sendLog("error", `error from api: ${response.statusText}`)
-
-        var res: { results: CandleResponse[] } = await response.json();
-        res.results.sort((a, b) => b.t - a.t);
+            if (response.status != 200)
+                return await sendLog("error", `error from api: ${response.statusText}`)
 
 
-        let sortedList = formatData(res.results, symbol)
+            var res: { results: CandleResponse[] } = await response.json();
+            res.results.sort((a, b) => b.t - a.t);
+            sortedList = formatData(res.results, symbol)
+        } else {
+            sortedList = data
+        }
 
-        let idealRate = timeFrame == "5m" ? 0.03 : 0.10
+
+
+        if (timeFrame == "5m") {
+            let convertedCandles = convert5mTo15mCandles(sortedList)
+
+            await this.runCheck(symbol, '15', '15m', upperTimeZones, convertedCandles)
+        }
+
+        let idealRate = timeFrame == "3h" ? 0.10 : 0.03
         let strategyRes = GetByOrderBlockStrategy(sortedList, idealRate);
         let result: SignalTradeVM[] = [];
 
@@ -122,7 +134,7 @@ export class FinanceService extends baseService {
 
             // 3- if the price is bellow the zone, it should be sell signal. if the price was above, it should be buy signal
             // (currentPrice > zoneHigh || currentPrice < zoneLow) &&
-            if (change <= (timeFrame == "5m" ? 0.20 : 0.70)) {// if the price was not in the zone
+            if (change <= (timeFrame == "3h" ? 0.70 : 0.20)) {// if the price was not in the zone
 
                 let entry: number = 0,
                     sl: number = 0,
@@ -194,10 +206,20 @@ export class FinanceService extends baseService {
     }
 }
 
+/**
+ * this function checks to see if the new zone is in any of bigger zones or at least part of it be in one of them
+ * @param zoneLow
+ * @param zoneHigh
+ * @param upperZones
+ * @returns
+ */
 function tradableinAnyZone(zoneLow: number, zoneHigh: number, upperZones: SignalTradeVM[]) {
-    let result = upperZones.filter(x => (x.zoneHigh >= zoneHigh && x.zoneLow <= zoneLow))
-    // || (x.zoneHigh <= zoneHigh && x.zoneHigh >= zoneLow)
-    // || (x.zoneHigh >= zoneHigh && x.zoneLow <= zoneHigh))
+
+    // check the new zone is in the bigger zone or at least part of it
+    let result = upperZones.filter(x =>
+        (x.zoneHigh >= zoneHigh && x.zoneLow <= zoneLow)
+        || (x.zoneHigh <= zoneHigh && x.zoneHigh >= zoneLow)
+        || (x.zoneHigh >= zoneHigh && x.zoneLow <= zoneHigh));
 
     return result.length > 0;
 }
