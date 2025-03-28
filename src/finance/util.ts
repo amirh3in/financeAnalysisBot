@@ -146,8 +146,16 @@ export function convert5mTo15mCandles(candles5m: Candlestick[]): Candlestick[] {
         candles15m.push(create15mCandle(currentGroup, currentGroupStartTime!));
     }
 
+    candles15m.sort((a, b) => b.timestamp - a.timestamp);
+
+    let sortedResult = candles15m.map((candle: Candlestick, index: number) => {
+        return {
+            ...candle,
+            id: index + 1
+        }
+    })
     // Return in descending order (newest first) to match input format
-    return candles15m.reverse();
+    return sortedResult;
 }
 
 function create15mCandle(group: Candlestick[], groupStartTime: number): Candlestick {
@@ -163,7 +171,7 @@ function create15mCandle(group: Candlestick[], groupStartTime: number): Candlest
 
     // Create the 15m candle
     return {
-        id: ++idCounter, // Using last candle's ID
+        id: 0, // Using last candle's ID
         low,
         high,
         volume,
