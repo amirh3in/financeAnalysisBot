@@ -86,7 +86,7 @@ let logs: [{ message?: string, bot?: TelegramBot, groupId?: number }] | any;
             try {
                 logs.forEach(async (item: any) => {
                     if (item.bot && item.message) {
-                        let res = await sendTelegramLog(item.bot, -1001506299946, item.message)
+                        let res = await sendTelegramLog(item.bot, -1001506299946, item.message, true)
 
                         if (res)
                             logs = logs.filter((x: any) => x.message != item.message);
@@ -96,16 +96,17 @@ let logs: [{ message?: string, bot?: TelegramBot, groupId?: number }] | any;
                 loginfo("sending logs went wrong: " + JSON.stringify(err), logs[0].bot)
             }
         }
-    }, 10000);
+    }, 300000); // 5 minutes
 })()
-const sendTelegramLog = async (bot: TelegramBot, groupId: number, message: string) => {
+const sendTelegramLog = async (bot: TelegramBot, groupId: number, message: string, retrying?: boolean) => {
     try {
         await bot.sendMessage(groupId, message);
 
         return true;
     } catch (err: any) {
         logs ??= [];
-        logs.push({ message: message, bot: bot, groupId: groupId })
+        if (!retrying)
+            logs.push({ message: message, bot: bot, groupId: groupId })
         loginfo("telegram calling went wrong error:" + JSON.stringify(err))
     }
 
