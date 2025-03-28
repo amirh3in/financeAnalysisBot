@@ -1,6 +1,6 @@
 import fp from 'fastify-plugin';
 import TelegramBot, { Message } from 'node-telegram-bot-api';
-import OpenAI from 'openai';
+// import OpenAI from 'openai';
 // import { HttpsProxyAgent } from "https-proxy-agent";
 const token = '1876139614:AAEyayGhXSAhWdHOn7JQ0JJEkSexBaCE-AA';
 // const agent = new HttpsProxyAgent('socks5://127.0.0.1:1080');
@@ -80,7 +80,8 @@ async function telegramPlugin(fastify: any, opts: any) {
 
         }
 
-        bot.sendMessage(chatId, response);
+        if (response && response != '' && response.trim() != '')
+            bot.sendMessage(chatId, response);
     });
 
     fastify.decorate('telegramBot', bot);

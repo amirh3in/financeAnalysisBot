@@ -1,7 +1,7 @@
 import { Trade } from '@prisma/client';
 import sendLog, { loginfo } from '../logger';
 import { CandleResponse, Candlestick, OrderBlockVM, SignalTradeVM } from '../finance/types';
-import { calculatePercentageChange, convert5mTo15mCandles, formatData } from '../finance/util';
+import { calculatePercentageChange, convert3hToDailyCandles, convert5mTo15mCandles, formatData } from '../finance/util';
 import { GetByOrderBlockStrategy } from '../finance/algOrderBlock';
 // import { FastifyInstance } from 'fastify';
 import { baseService } from './base';
@@ -15,8 +15,10 @@ import { logTextFile } from '../logger/textLogger';
 dotenv.config()
 export class FinanceService extends baseService {
 
+    private cache: Map<string, any> = new Map<string, any>();
+
     async addTrade(trade: Trade) {
-        let limit = trade.timeFrame == "3h" ? 6 : 4;
+        let limit = (trade.timeFrame == "3h" || trade.timeFrame == '1D') ? 6 : 4;
 
 
         const HoursAgo = new Date(Date.now() - limit * 60 * 60 * 1000);
@@ -57,32 +59,42 @@ export class FinanceService extends baseService {
         try {
             const symbol = process.env.PAIR ?? "xauusd";
 
-            let res = await this.runCheck(symbol, "3", '3h')
-            res ??= [];
-            await this.runCheck(symbol, "5", '5m', res)
+            let { result, dailyRes } = await this.runCheck(symbol, "3", '3h')
+            result ??= [];
+
+            await this.runCheck(symbol, "5", '5m', result)
+            await this.runCheck(symbol, "5", '5m', dailyRes)
 
         } catch (err: any) {
             loginfo("exeption job: " + JSON.stringify(err))
         }
     }
 
-    async runCheck(symbol: string, interval: string, timeFrame: TimeFrame, upperTimeZones?: SignalTradeVM[], data?: Candlestick[]) {
+    async runCheck(symbol: string, interval: string, timeFrame: TimeFrame, upperTimeZones?: SignalTradeVM[], data?: Candlestick[]): Promise<{ result: SignalTradeVM[], dailyRes: SignalTradeVM[] }> {
         let sortedList: Candlestick[];
-        if (!data) {
+        let daily: SignalTradeVM[] = [];
+        if (!data && !this.cache.get(timeFrame)) {
             const { tomorrow, daysAgo, timeTitle } = getTimeRange(timeFrame)
             let url = `https://api.finage.co.uk/agg/forex/${symbol}/${interval}/${timeTitle}/${daysAgo}/${tomorrow}/?apikey=${process.env.FOREX_API}`;
             // const timeFrame: TimeFrame = time == "minute" ? "15m" : "3h"
             var response = await fetch(url);
 
-            if (response.status != 200)
-                return await sendLog("error", `error from api: ${response.statusText}`)
+            if (response.status != 200) {
+                await sendLog("error", `error from api: ${response.statusText}`)
+                return { result: [], dailyRes: [] }
+            }
 
 
             var res: { results: CandleResponse[] } = await response.json();
             res.results.sort((a, b) => b.t - a.t);
             sortedList = formatData(res.results, symbol)
+
+            this.cache.set(timeFrame, sortedList);
         } else {
-            sortedList = data
+            if (data)
+                sortedList = data
+            else
+                sortedList = this.cache.get(timeFrame)
         }
 
 
@@ -93,11 +105,21 @@ export class FinanceService extends baseService {
             await this.runCheck(symbol, '15', '15m', upperTimeZones, convertedCandles)
         }
 
-        let idealRate = timeFrame == "3h" ? 0.10 : 0.03
+        if (timeFrame == "3h") {
+
+            let convertedCandles = convert3hToDailyCandles(sortedList);
+
+            let { result } = await this.runCheck(symbol, '1', "1D", [], convertedCandles)
+            daily = result;
+
+        }
+
+        let idealRate = (timeFrame == "3h" || timeFrame == '1D') ? 0.10 : 0.03
         let strategyRes = GetByOrderBlockStrategy(sortedList, idealRate);
         let result: SignalTradeVM[] = [];
 
-        await logTextFile({ data: JSON.stringify(strategyRes), title: `strategies result ${timeFrame}`, caption: "⌚Time: " + new Date().toLocaleString() })
+        if (!process.env.DEV)
+            await logTextFile({ data: JSON.stringify(strategyRes), title: `strategies result ${timeFrame}`, caption: "⌚Time: " + new Date().toLocaleString() })
 
         // 1- loop through the trade opportunities.
         strategyRes.forEach(async (item: OrderBlockVM) => {
@@ -119,7 +141,7 @@ export class FinanceService extends baseService {
             if (upperTimeZones && upperTimeZones?.length != 0)
                 inBiggerZone = tradableinAnyZone(zoneLow, zoneHigh, upperTimeZones)
 
-            if (timeFrame != '3h' && !inBiggerZone)
+            if (timeFrame != '3h' && timeFrame != '1D' && !inBiggerZone)
                 return;
 
             const currentPrice = sortedList[0].close
@@ -134,7 +156,7 @@ export class FinanceService extends baseService {
 
             // 3- if the price is bellow the zone, it should be sell signal. if the price was above, it should be buy signal
             // (currentPrice > zoneHigh || currentPrice < zoneLow) &&
-            if (change <= (timeFrame == "3h" ? 0.70 : 0.20)) {// if the price was not in the zone
+            if (change <= ((timeFrame == "3h" || timeFrame == '1D') ? 0.70 : 0.20)) {// if the price was not in the zone
 
                 let entry: number = 0,
                     sl: number = 0,
@@ -147,13 +169,13 @@ export class FinanceService extends baseService {
                 const { closeInRangeCount, passesThroughRangeCount } = countCandlesInRange(afterCandles, zoneLow, zoneHigh)
                 if ((timeFrame == "5m" || timeFrame == "15m") && closeInRangeCount > 10)
                     return
-                else if (timeFrame == "3h" && closeInRangeCount > 5)
+                else if ((timeFrame == "3h" || timeFrame == '1D') && closeInRangeCount > 5)
                     return;
 
 
 
                 // check if the timeframe is for support or trade
-                if (timeFrame != '3h') {// signal for trade
+                if (timeFrame != '3h' && timeFrame != '1D') {// signal for trade
 
                     // filling data with buy or sell signal
                     if (isBuy) {
@@ -202,7 +224,7 @@ export class FinanceService extends baseService {
             }
         })
 
-        return result;
+        return { result: result, dailyRes: daily };
     }
 }
 
@@ -271,7 +293,7 @@ function getTimeRange(timeframe: TimeFrame): { tomorrow: string; daysAgo: string
     tomorrow.setDate(today.getDate() + 1);
 
     // Calculate date 15 days ago
-    let dayCount = timeframe == "3h" ? 15 : 1;
+    let dayCount = timeframe == "3h" ? 68 : 1;
     const daysAgo = new Date(today);
     daysAgo.setDate(today.getDate() - dayCount);
 
@@ -283,7 +305,7 @@ function getTimeRange(timeframe: TimeFrame): { tomorrow: string; daysAgo: string
         return `${year}-${month}-${day}`;
     };
 
-    let timeTitle = timeframe.indexOf("m") > -1 ? "minute" : timeframe.indexOf("h") > -1 ? "hour" : "";
+    let timeTitle = timeframe.indexOf("m") > -1 ? "minute" : timeframe.indexOf("h") > -1 ? "hour" : timeframe.indexOf("D") > -1 ? "Day" : "";
 
     return {
         timeTitle: timeTitle,

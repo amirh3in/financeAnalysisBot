@@ -1,1 +1,1 @@
-export type TimeFrame = "5m" | "15m" | "3h"
+export type TimeFrame = "5m" | "15m" | "3h" | "1D"

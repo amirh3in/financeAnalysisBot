@@ -1,6 +1,10 @@
 import TelegramBot from "node-telegram-bot-api";
 
 const sendLog = async (title: string, message: string, candle: any = null, bot?: TelegramBot) => {
+
+    if (process.env.DEV)
+        return;
+
     const now = new Date();
     const time = now.toLocaleString(); // Format the time as ISO string
 
@@ -16,7 +20,7 @@ const sendLog = async (title: string, message: string, candle: any = null, bot?:
     const url = new URL('https://eitaayar.ir/api/bot204817:147f2e2d-1ee2-4ab1-a346-3e08d345749f/sendMessage');
 
     let logMessage = `Title: ${log.title}\n⌚Time: ${log.time}\n📫Message: ${log.message}\n📝Candle: ${log.candle}`;
-    url.searchParams.append('chat_id', '10525463');
+    url.searchParams.append('chat_id', '9400341');
     url.searchParams.append('text', logMessage);
     url.searchParams.append('date', '0');
     // url.searchParams.append('pin', 'on');
@@ -44,6 +48,8 @@ const sendLog = async (title: string, message: string, candle: any = null, bot?:
 }
 
 export const loginfo = async (message: string, bot?: TelegramBot) => {
+    if (process.env.DEV)
+        return;
 
     const time = new Date().toLocaleString(); // Format the time as ISO string
 
