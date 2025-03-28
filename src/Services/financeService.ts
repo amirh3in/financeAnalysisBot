@@ -1,5 +1,5 @@
 import { Trade } from '@prisma/client';
-import sendLog from '../logger';
+import sendLog, { loginfo } from '../logger';
 import { CandleResponse, Candlestick, OrderBlockVM, SignalTradeVM } from '../finance/types';
 import { calculatePercentageChange, convert5mTo15mCandles, formatData } from '../finance/util';
 import { GetByOrderBlockStrategy } from '../finance/algOrderBlock';
@@ -55,14 +55,14 @@ export class FinanceService extends baseService {
 
     async checkforOpportunities() {
         try {
-            const symbol = "xauusd";
+            const symbol = process.env.PAIR ?? "xauusd";
 
             let res = await this.runCheck(symbol, "3", '3h')
             res ??= [];
             await this.runCheck(symbol, "5", '5m', res)
 
         } catch (err: any) {
-            sendLog("exeption: ", err?.message)
+            loginfo("exeption job: " + JSON.stringify(err))
         }
     }
 

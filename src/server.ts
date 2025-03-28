@@ -5,7 +5,7 @@ import Fastify from 'fastify'
 import { initSwagger } from './swagger'
 import app from './app'
 import ajvErrors from 'ajv-errors'
-import sendLog from './logger'
+import sendLog, { loginfo } from './logger'
 
 dotenv.config()
 
@@ -54,7 +54,7 @@ void initSwagger(fastify)
 const closeListeners = closeWithGrace({ delay: 5000 }, async (opts: any) => {
   if (opts.err) {
     console.log("eerorrrr happened in graceeeeeeeeeeeeeeeee")
-    await sendLog("exeption: ", opts.err.message)
+    await loginfo("exeption: " + JSON.stringify(opts.err))
     fastify.log.error(opts.err)
   }
   await fastify.close()

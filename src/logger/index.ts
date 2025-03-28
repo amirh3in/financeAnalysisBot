@@ -28,8 +28,9 @@ const sendLog = async (title: string, message: string, candle: any = null, bot?:
             method: 'GET'
         });
 
-        // if (bot)
-        //     bot.sendMessage(-1001506299946, logMessage);
+
+        if (bot)
+            await sendTelegramLog(bot, -1001506299946, logMessage);
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -63,8 +64,8 @@ export const loginfo = async (message: string, bot?: TelegramBot) => {
             method: 'GET'
         });
 
-        // if (bot)
-        //     bot.sendMessage(805717280, logMessage);
+        if (bot)
+            await sendTelegramLog(bot, 805717280, logMessage);
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -74,6 +75,15 @@ export const loginfo = async (message: string, bot?: TelegramBot) => {
         console.log('Log sent successfully:', data);
     } catch (error) {
         console.error('Error sending log:', error);
+    }
+}
+
+
+const sendTelegramLog = async (bot: TelegramBot, groupId: number, message: string) => {
+    try {
+        await bot.sendMessage(groupId, message);
+    } catch (err: any) {
+        loginfo("telegram calling went wrong error:" + JSON.stringify(err))
     }
 }
 
