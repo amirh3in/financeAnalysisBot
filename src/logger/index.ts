@@ -92,7 +92,7 @@ let logs: [{ message?: string, bot?: TelegramBot, groupId?: number }] | any;
             try {
                 logs.forEach(async (item: any) => {
                     if (item.bot && item.message) {
-                        let res = await sendTelegramLog(item.bot, -1001506299946, item.message, true)
+                        let res = await sendTelegramLog(item.bot, item.groupId, item.message, true)
 
                         if (res)
                             logs = logs.filter((x: any) => x.message != item.message);
