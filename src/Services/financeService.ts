@@ -63,7 +63,7 @@ export class FinanceService extends baseService {
             result ??= [];
 
             await this.runCheck(symbol, "5", '5m', result)
-            await this.runCheck(symbol, "5", '5m', dailyRes)
+            // await this.runCheck(symbol, "5", '5m', dailyRes)
 
         } catch (err: any) {
             loginfo("exeption job: " + JSON.stringify(err))
