@@ -1,4 +1,4 @@
-import { CandleResponse, Candlestick } from "./types";
+import { CandleResponse, Candlestick, SignalTradeVM } from "./types/types";
 
 function isMomentom(candle: CandleResponse) {
     if (candle.o < candle.c) {
@@ -99,6 +99,59 @@ export function calculatePercentageChange(originalPrice: number, newPrice: numbe
     const percentageChange = (difference / originalPrice) * 100;
     return Math.abs(percentageChange);
 }
+
+/**
+ * this function returns the count of candles that was in the range of given numbers
+ * @param candles
+ * @param minRange
+ * @param maxRange
+ * @returns
+ */
+export function countCandlesInRange(candles: Candlestick[], minRange: number, maxRange: number) {
+    let closeInRangeCount = 0;
+    let passesThroughRangeCount = 0;
+
+    for (const candle of candles) {
+        const { open, close } = candle;
+
+        // Check if close is within the range
+        if (close >= minRange && close <= maxRange) {
+            closeInRangeCount++;
+        }
+
+        // Check if candle passes through the range but both open and close are outside
+        if ((open < minRange && close > maxRange) ||  // Opens below and closes above
+            (open > maxRange && close < minRange)) {  // Opens above and closes below
+            passesThroughRangeCount++;
+        }
+    }
+
+    return {
+        closeInRangeCount,
+        passesThroughRangeCount
+    };
+}
+
+
+/**
+ * this function checks to see if the new zone is in any of bigger zones or at least part of it be in one of them
+ * @param zoneLow
+ * @param zoneHigh
+ * @param upperZones
+ * @returns
+ */
+export function tradableinAnyZone(zoneLow: number, zoneHigh: number, upperZones: SignalTradeVM[]) {
+
+    // check the new zone is in the bigger zone or at least part of it
+    let result = upperZones.filter(x =>
+        (x.zoneHigh >= zoneHigh && x.zoneLow <= zoneLow)
+        || (x.zoneHigh <= zoneHigh && x.zoneHigh >= zoneLow)
+        || (x.zoneHigh >= zoneHigh && x.zoneLow <= zoneHigh));
+
+    return result.length > 0;
+}
+
+
 
 function convertTimestampToReadableDate(timestamp: number) {
     const date = new Date(timestamp);

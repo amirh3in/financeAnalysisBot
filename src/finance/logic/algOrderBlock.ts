@@ -1,4 +1,4 @@
-import { Candlestick, OrderBlockVM } from "./types";
+import { Candlestick, OrderBlockVM } from "../types/types";
 
 /**
  * this function check candles having conditions for being order block candles with given alghoritm
@@ -19,28 +19,7 @@ export function GetByOrderBlockStrategy(data: Candlestick[], idealRate: number =
 
     return result;
 }
-function findSwingBases(candlesticks: Candlestick[]) {
-    const swingBases = [];
 
-    for (let i = 1; i < candlesticks.length - 1; i++) {
-        const prev = candlesticks[i + 1];
-        // const prev2 = candlesticks[i + 2];
-        const current = candlesticks[i];
-        const next = candlesticks[i - 1];
-
-        // Check for local minima (base of a swing low)
-        if (current.low < prev.low && current.low < next.low) {
-            swingBases.push({ type: 'low', candlestick: current });
-        }
-
-        // Check for local maxima (base of a swing high)
-        if (current.high > prev.high && current.high > next.high) {
-            swingBases.push({ type: 'high', candlestick: current });
-        }
-    }
-
-    return swingBases;
-}
 
 /**
  * this function check each candle that has condition for being order block candle with given alghoritm

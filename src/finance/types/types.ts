@@ -44,3 +44,19 @@ export type SignalTradeVM = Trade & {
     zoneHigh: number;
     zoneLow: number;
 }
+
+
+
+////////////////////////
+export type FindSwingBasesResult = {
+    type: string;
+    candlestick: Candlestick;
+    index: number;
+}
+
+export interface BreakerBlock {
+    candlestick: Candlestick;
+    type: "mitigation bullish" | "mitigation bearish" | "breaker bearish" | "breaker bullish";
+    zoneHigh?: number;
+    zoneLow?: number;
+}
